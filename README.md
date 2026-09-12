@@ -1,4 +1,4 @@
-# Wildflight
+# Flappy Bird 3D
 
 A playable 3D Flappy Bird interpretation for **Unity 6**, with an original **Blender** hummingbird. Fly through oxidized copper passages above a reflective river, against layered cedar forests and a misty mountain skyline.
 
