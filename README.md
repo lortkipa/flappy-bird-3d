@@ -13,7 +13,9 @@ Launch `Builds/Linux/Wildflight.x86_64`, then click **Take flight** or press **S
 | R or Space after a collision | Retry |
 | M | Toggle sound |
 
-The top-right controls toggle sound and graphics quality. Passages increase your score and gradually increase flight speed. Your personal best and sound preference are saved locally. Losing focus pauses the game.
+The microphone button at the top right mutes or unmutes all audio; a slash indicates muted sound. Pause appears beside it during flight. Passages increase your score and gradually increase flight speed. Your personal best and sound preference are saved locally. Losing focus pauses the game.
+
+An original 116 BPM soundtrack, **River Run**, pairs a plucked melody with warm chords, bass, and light drums. It loops continuously across retries, fades up during flight, and softens on pause or collision. The sound toggle also mutes music.
 
 ## Open the source
 
@@ -41,7 +43,7 @@ Builds/Linux/Wildflight.x86_64 --smoke-test \
   -logFile /tmp/wildflight-player.log
 ```
 
-The build runs nine deterministic simulation checks. The integration test pilots the bird through three passages, checks pause, waits for a collision, checks restart, and writes screenshots plus `Captures/smoke-test.json`.
+The build runs nine deterministic simulation checks. The integration test pilots the bird through three passages, checks pause, waits for a collision, checks restart, verifies music playback and pause ducking, and writes screenshots plus `Captures/smoke-test.json`.
 
 ## Build for the web
 
@@ -53,13 +55,16 @@ bash tools/unity.sh -batchmode -nographics -quit \
 
 This writes a static WebGL player to `Builds/WebGL/`. Serve that directory through a local or hosted web server; opening `index.html` directly from the filesystem is not supported by browsers.
 
+The custom template in `Assets/WebGLTemplates/Wildflight/` fills the browser viewport automatically on desktop and mobile, follows window resizing, and removes the default Unity footer and fullscreen button.
+
 ## Project map
 
 - `Assets/Scripts/FlightModel.cs`: deterministic flight and collision rules.
 - `Assets/Scripts/WildflightGame.cs`: state transitions, input, obstacle pooling, wing animation, interface, and rendered verification.
 - `Assets/Scripts/WorldBuilder.cs`: river valley, trees, banks, pipes, and materials.
 - `Assets/Scripts/Cinema.cs`: water reflection camera and filmic rendering.
-- `Assets/Scripts/FlightAudio.cs`: synthesized wingbeats, scoring, impact, and ambience.
+- `Assets/Scripts/FlightAudio.cs`: music mixing, synthesized wingbeats, scoring, impact, and ambience.
+- `tools/create_music.py`: reproducible original soundtrack; run with Python and NumPy to regenerate `Assets/Resources/Audio/RiverRun.wav`.
 - `Assets/Editor/WildflightBuild.cs`: scene setup, checks, and Linux build.
 - `tools/create_bird.py`: reproducible Blender modeling and FBX export.
 - `tools/create_foliage.py`: original cedar alpha texture, generated with Python's standard library.

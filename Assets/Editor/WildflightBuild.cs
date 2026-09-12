@@ -81,6 +81,7 @@ namespace Wildflight.Editor {
    PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Disabled;
    PlayerSettings.WebGL.decompressionFallback=false;
    PlayerSettings.WebGL.dataCaching=true;
+   PlayerSettings.WebGL.template="PROJECT:Wildflight";
    var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions {
     scenes=new[]{"Assets/Scenes/Riverlands.unity"},locationPathName="Builds/WebGL",
     target=BuildTarget.WebGL,options=BuildOptions.None

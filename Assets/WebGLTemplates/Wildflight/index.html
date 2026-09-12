@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#142c24">
+  <link rel="icon" href="data:,">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #142c24; }
+    #unity-canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; outline: none; touch-action: none; }
+    #loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 16px; text-align: center; color: #eff2d9; font: 18px system-ui, sans-serif; pointer-events: none; }
+    #loading[hidden] { display: none; }
+    progress { width: 220px; accent-color: #cfe67a; }
+    #error { position: fixed; inset: auto 20px 20px; padding: 16px; background: #351e1e; color: white; font: 16px system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="0" aria-label="Wildflight game. Space to flap, P to pause, M to mute or unmute."></canvas>
+  <div id="loading" role="status">Loading Wildflight<progress max="1" value="0" aria-label="Loading game"></progress></div>
+  <div id="error" role="alert" hidden></div>
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+    const canvas = document.getElementById('unity-canvas');
+    const loading = document.getElementById('loading');
+    function showError(message) {
+      const error = document.getElementById('error');
+      error.textContent = message;
+      error.hidden = false;
+      loading.hidden = true;
+    }
+    createUnityInstance(canvas, {
+      dataUrl: 'Build/{{{ DATA_FILENAME }}}',
+      frameworkUrl: 'Build/{{{ FRAMEWORK_FILENAME }}}',
+      codeUrl: 'Build/{{{ CODE_FILENAME }}}',
+      streamingAssetsUrl: 'StreamingAssets',
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+      matchWebGLToCanvasSize: true,
+      showBanner: (message, type) => { if (type === 'error') showError(message); }
+    }, progress => { loading.querySelector('progress').value = progress; })
+      .then(() => { loading.hidden = true; canvas.focus(); })
+      .catch(showError);
+  </script>
+</body>
+</html>

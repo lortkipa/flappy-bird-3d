@@ -17,7 +17,7 @@ namespace Wildflight {
   Vector3 birdPosition;System.Random random=new System.Random();
   const float BirdX=-4,HalfGap=2.15f,Spacing=10.5f;
   Color cream=new Color(.94f,.95f,.85f),accent=new Color(.81f,.9f,.47f);
-  Texture2D white;GUIStyle label;bool styles;
+  Texture2D white,micIcon,mutedMicIcon;GUIStyle label;bool styles;
   readonly Dictionary<int,GUIStyle> textStyles=new Dictionary<int,GUIStyle>();
   bool smoke;string captureDir;
 
@@ -84,8 +84,8 @@ namespace Wildflight {
     if(!toggledPause) {
      bool pressed=Input.GetKeyDown(KeyCode.Space);
      if(State==Mode.Flying) {
-      if(Input.touchCount==0&&Input.GetMouseButtonDown(0)&&!OverPause(Input.mousePosition))pressed=true;
-      if(Input.touchCount>0&&Input.GetTouch(0).phase==TouchPhase.Began&&!OverPause(Input.GetTouch(0).position))pressed=true;
+      if(Input.touchCount==0&&Input.GetMouseButtonDown(0)&&!OverControls(Input.mousePosition))pressed=true;
+      if(Input.touchCount>0&&Input.GetTouch(0).phase==TouchPhase.Began&&!OverControls(Input.GetTouch(0).position))pressed=true;
      }
      if(pressed){if(State==Mode.Ready)Begin();else if(State==Mode.Flying)Flap();else if(State==Mode.Paused)Pause();else if(CanReplay())Begin();}
      if(Input.GetKeyDown(KeyCode.R)&&CanReplay())Begin();
@@ -142,11 +142,42 @@ namespace Wildflight {
    float s=UiScale();Rect safe=Screen.safeArea;
    return new Rect(safe.x/s,(Screen.height-safe.yMax)/s,safe.width/s,safe.height/s);
   }
-  Rect PauseRect(){Rect bounds=UiBounds();return new Rect(bounds.xMax-112,bounds.y+20,92,52);}
-  bool OverPause(Vector2 position)=>PauseRect().Contains(new Vector2(position.x,Screen.height-position.y)/UiScale());
+  Rect PauseRect(){Rect bounds=UiBounds();return new Rect(bounds.xMax-176,bounds.y+20,92,52);}
+  Rect SoundRect(){Rect bounds=UiBounds();return new Rect(bounds.xMax-72,bounds.y+20,52,52);}
+  bool OverControls(Vector2 position) {
+   Vector2 point=new Vector2(position.x,Screen.height-position.y)/UiScale();
+   return PauseRect().Contains(point)||SoundRect().Contains(point);
+  }
   void InitStyles() {
    if(styles)return;styles=true;white=Texture2D.whiteTexture;
    label=new GUIStyle(GUI.skin.label){font=sans,richText=false,wordWrap=false,padding=new RectOffset(0,0,0,0)};
+   micIcon=CreateMicIcon(false);mutedMicIcon=CreateMicIcon(true);
+  }
+  Texture2D CreateMicIcon(bool muted) {
+   const int size=64;var texture=new Texture2D(size,size,TextureFormat.RGBA32,false);
+   texture.wrapMode=TextureWrapMode.Clamp;
+   for(int y=0;y<size;y++)for(int x=0;x<size;x++) {
+    Vector2 p=new Vector2((x+.5f)/2,(y+.5f)/2);
+    float capsule=Vector2.Distance(p,new Vector2(16,Mathf.Clamp(p.y,17,25)))-4;
+    float arc=Mathf.Abs(Vector2.Distance(p,new Vector2(16,18))-8)-1;
+    bool ink=capsule<0||(arc<0&&p.y<=18)||(Mathf.Abs(p.x-8)<1&&p.y>18&&p.y<21)||(Mathf.Abs(p.x-24)<1&&p.y>18&&p.y<21);
+    ink|=Mathf.Abs(p.x-16)<1&&p.y>=5&&p.y<=10;
+    ink|=Mathf.Abs(p.x-16)<6&&Mathf.Abs(p.y-5)<1;
+    if(muted) {
+     float slash=Mathf.Abs(p.y-p.x)/Mathf.Sqrt(2);
+     if(slash<2.8f)ink=false;
+     if(slash<1.1f&&p.x>4&&p.x<28)ink=true;
+    }
+    texture.SetPixel(x,y,new Color(1,1,1,ink?1:0));
+   }
+   texture.Apply();return texture;
+  }
+  void SoundButton() {
+   Rect rect=SoundRect();bool hover=rect.Contains(Event.current.mousePosition);
+   Box(rect,new Color(.035f,.075f,.055f,hover?.95f:.82f));
+   GUI.color=sound.Muted?new Color(.85f,.72f,.62f):cream;
+   GUI.DrawTexture(new Rect(rect.x+10,rect.y+10,32,32),sound.Muted?mutedMicIcon:micIcon);GUI.color=Color.white;
+   if(GUI.Button(rect,new GUIContent("",sound.Muted?"Unmute audio (M)":"Mute audio (M)"),GUIStyle.none))sound.Toggle();
   }
   void Box(Rect rect,Color color) {GUI.color=color;GUI.DrawTexture(rect,white);GUI.color=Color.white;}
   void Text(string text,Rect rect,int size,Color color) {
@@ -170,6 +201,7 @@ namespace Wildflight {
    var shadowRect=scoreRect;shadowRect.position+=new Vector2(1,2);
    Text(Flight.Score.ToString(),shadowRect,48,new Color(0,0,0,.65f));
    Text(Flight.Score.ToString(),scoreRect,48,Color.Lerp(cream,accent,scorePulse));
+   SoundButton();
    if(State==Mode.Flying) {
     if(Button("Pause",PauseRect()))Pause();
    } else if(State==Mode.Ready||State==Mode.Paused||CanReplay()) {
@@ -187,6 +219,9 @@ namespace Wildflight {
   IEnumerator SmokeTest() {
    Directory.CreateDirectory(captureDir);
    yield return new WaitForSeconds(2);yield return Capture("01-title");
+   AudioSource music=null;
+   foreach(var source in sound.GetComponents<AudioSource>())if(source.clip&&source.clip.name=="RiverRun")music=source;
+   bool musicPlaying=music&&music.isPlaying&&music.loop&&music.clip.length>30&&music.mute==sound.Muted;
    Begin();float start=Time.time;
    while(Flight.Score<3&&State==Mode.Flying&&Time.time-start<24) {
     Gate next=null;foreach(var g in gates)if(g.root.position.x>BirdX-1.36f&&(next==null||g.root.position.x<next.root.position.x))next=g;
@@ -196,15 +231,20 @@ namespace Wildflight {
    }
    bool scoring=Flight.Score>=3;
    yield return Capture("02-flight");
-   Pause();float y=Flight.Y,distance=Flight.Distance;yield return new WaitForSeconds(.3f);
+   float flightVolume=music?music.volume:0;
+   Pause();float y=Flight.Y,distance=Flight.Distance;yield return new WaitForSeconds(.8f);
    bool pause=State==Mode.Paused&&Flight.Y==y&&Flight.Distance==distance;
+   bool musicDucked=music&&music.isPlaying&&music.volume<flightVolume*.5f;
    yield return Capture("03-pause");Pause();
    yield return new WaitForSeconds(3);bool death=State==Mode.Crashed;
    yield return Capture("04-retry");
+   int musicPosition=music?music.timeSamples:0;
    Begin();bool restart=State==Mode.Flying&&Flight.Score==0&&Flight.Alive;
+   bool musicContinuous=music&&music.isPlaying&&music.timeSamples>=musicPosition;
    string result="{\"scoring\":"+scoring.ToString().ToLower()+",\"pause\":"+pause.ToString().ToLower()+",\"collision\":"+death.ToString().ToLower()+",\"restart\":"+restart.ToString().ToLower()+",\"birdImported\":"+(nearWing&&farWing?"true":"false")+"}";
+   result=result.TrimEnd('}')+",\"musicPlaying\":"+musicPlaying.ToString().ToLower()+",\"musicDucked\":"+musicDucked.ToString().ToLower()+",\"musicContinuous\":"+musicContinuous.ToString().ToLower()+"}";
    File.WriteAllText(Path.Combine(captureDir,"smoke-test.json"),result);Debug.Log("WILDFLIGHT_SMOKE "+result);
-   Application.Quit(scoring&&pause&&death&&restart?0:2);
+   Application.Quit(scoring&&pause&&death&&restart&&musicPlaying&&musicDucked&&musicContinuous?0:2);
   }
  }
 }
