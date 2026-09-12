@@ -75,8 +75,8 @@ namespace Wildflight {
   void Flap(){Flight.Flap();wingKick=1;if(sound)sound.Flap();}
   void Pause(){if(State==Mode.Flying)State=Mode.Paused;else if(State==Mode.Paused)State=Mode.Flying;}
   void Update() {
-   // Preserve the horizontal play area when a phone rotates into portrait.
-   cam.fieldOfView=2*Mathf.Atan(Mathf.Tan(21.5f*Mathf.Deg2Rad)*Mathf.Max(1,(4f/3f)/cam.aspect))*Mathf.Rad2Deg;
+   // Keep the bird and next passage in view while making them larger on portrait screens.
+   cam.fieldOfView=2*Mathf.Atan(Mathf.Tan(21.5f*Mathf.Deg2Rad)*Mathf.Max(1,1.2f/cam.aspect))*Mathf.Rad2Deg;
    if(!smoke) {
     if(Input.GetKeyDown(KeyCode.M))sound.Toggle();
     bool toggledPause=Input.GetKeyDown(KeyCode.Escape)||Input.GetKeyDown(KeyCode.P);
