@@ -15,7 +15,7 @@ namespace Wildflight.Editor {
   [MenuItem("Wildflight/Prepare game")]
   public static void Prepare() {
    AssetDatabase.Refresh();
-   PlayerSettings.companyName="Wildflight Studio";PlayerSettings.productName="Wildflight";
+   PlayerSettings.companyName="Wildflight Studio";PlayerSettings.productName="Flappy Bird";
    PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
    PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;
    PlayerSettings.runInBackground=true;PlayerSettings.colorSpace=ColorSpace.Linear;
